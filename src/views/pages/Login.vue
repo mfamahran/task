@@ -23,6 +23,7 @@
                                     <h4 class="mb-4">Login</h4>
                                     <p>Welcome back, please login to your account.</p>
                                 </div>
+                                <form @submit.prevent="login">
                                 <vs-input
                                     name="email"
                                     icon="icon icon-user"
@@ -46,7 +47,7 @@
                                 </div>
                                 <vs-button  type="border">Register</vs-button>
                                 <vs-button class="float-right">Login</vs-button>
-
+</form>
                                 <vs-divider>OR</vs-divider>
 
                                 <div class="social-login flex flex-wrap justify-between">
@@ -93,6 +94,16 @@ export default {
             password: '',
             checkbox_remember_me: false
         }
+    },
+    methods: {
+      login: function () {
+        console.log()
+        let email = this.email 
+        let password = this.password
+        this.$store.dispatch('auth/login', { email, password })
+       .then(() => this.$router.push('/'))
+       .catch(err => console.log(err))
+      }
     }
 }
 </script>

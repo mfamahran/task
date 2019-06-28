@@ -19,6 +19,7 @@
 
 import Vue from 'vue'
 import Router from 'vue-router'
+import store from './store/store.js'
 
 Vue.use(Router)
 
@@ -60,6 +61,7 @@ const router = new Router({
                     component: () => import('./views/apps/eCommerce/ECommerceCheckout.vue'),
                     props: true,
                     meta: {
+                      requiresAuth: true,
                         breadcrumb: [
                             { title: 'Home', url: '/' },
                             { title: 'eCommerce', url:'/apps/eCommerce/shop'},
@@ -82,8 +84,8 @@ const router = new Router({
       // PAGES
       // =============================================================================
           {
-            path: '/pages/login',
-            name: 'pageLogin',
+            path: '/login',
+            name: 'Login',
             component: () => import('@/views/pages/Login.vue')
           },
           {
@@ -109,4 +111,17 @@ router.afterEach(() => {
     }
 })
 
+router.beforeEach((to, from, next) => {
+  console.log(store.getters.isLoggedIn)
+  if(to.matched.some(record => record.meta.requiresAuth)) {
+
+    if (store.getters.isLoggedIn) {
+      next()
+      return
+    }
+    next('/login') 
+  } else {
+    next() 
+  }
+})
 export default router

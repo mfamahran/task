@@ -9,8 +9,8 @@
 
 
 import firebase from 'firebase/app'
-import 'firebase/auth'
 import router from '@/router'
+import axios from 'axios'
 
 export default {
     loginAttempt({ dispatch }, payload) {
@@ -48,60 +48,24 @@ export default {
             dispatch('login', newPayload)
         }
     },
-    login({ commit, state, dispatch }, payload) {
-
-        // If user is already logged in notify and exit
-        if (state.isUserLoggedIn()) {
-            payload.notify({
-                title: 'Login Attempt',
-                text: 'You are already logged in!',
-                iconPack: 'feather',
-                icon: 'icon-alert-circle',
-                color: 'warning'
-            });
-            return false
-        }
-
-        // Try to sigin
-        firebase.auth().signInWithEmailAndPassword(payload.userDetails.email, payload.userDetails.password)
-
-            .then((result) => {
-
-                // Set FLAG username update required for updating username
-                let isUsernameUpdateRequired = false;
-
-                // if username is provided and updateUsername FLAG is true
-                  // set local username update FLAG to true
-                  // try to update username
-                if(payload.updateUsername && payload.userDetails.username) {
-
-                    isUsernameUpdateRequired = true;
-
-                    dispatch('updateUsername', {
-                      user: result.user,
-                      username: payload.userDetails.username,
-                      notify: payload.notify,
-                      isReloadRequired: true
-                    })
-                }
-
-                // if username update is not required
-                  // just reload the page to get fresh data
-                  // set new user data in localstorage
-                if(!isUsernameUpdateRequired) {
-                  router.push(router.currentRoute.query.to || '/');
-                  commit('UPDATE_AUTHENTICATED_USER', result.user.providerData[0])
-                }
-            }, (err) => {
-                payload.notify({
-                    time: 2500,
-                    title: 'Error',
-                    text: err.message,
-                    iconPack: 'feather',
-                    icon: 'icon-alert-circle',
-                    color: 'danger'
-                });
-            })
+    login({commit}, user){
+        return new Promise((resolve, reject) => {
+          commit('auth_request')
+          axios({url: 'http://localhost:8000/oauth/token', data: user, method: 'POST' })
+          .then(resp => {
+            const token = resp.data.token
+            const user = resp.data.user
+            localStorage.setItem('token', token)
+            axios.defaults.headers.common['Authorization'] = token
+            commit('auth_success', token, user)
+            resolve(resp)
+          })
+          .catch(err => {
+            commit('auth_error')
+            localStorage.removeItem('token')
+            reject(err)
+          })
+        })
     },
 
     // Google Login
@@ -303,6 +267,14 @@ export default {
             });
         })
     },
+    // logout({commit}){
+    //   return new Promise((resolve, reject) => {
+    //     commit('logout')
+    //     localStorage.removeItem('token')
+    //     delete axios.defaults.headers.common['Authorization']
+    //     resolve()
+    //   })
+    // },
     updateAuthenticatedUser({ commit }, payload) {
         commit('UPDATE_AUTHENTICATED_USER', payload)
     }

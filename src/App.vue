@@ -23,12 +23,18 @@ export default {
       this.toggleClassInBody(val);
     }
   },
-  async created() {
-    try {
-      await this.$auth.renewTokens();
-    } catch (e) {
-      console.log(e);
-    }
+  // async created() {
+  //   this.$http.interceptors.response.use(undefined, function (err) {
+  //     return new Promise(function (resolve, reject) {
+  //       if (err.status === 401 && err.config && !err.config.__isRetryRequest) {
+  //         this.$store.dispatch(logout)
+  //       }
+  //       throw err;
+  //     });
+  //   });
+  // },
+  computed: {
+    isLoggedIn : function(){ return this.$store.getters.isLoggedIn}
   },
   methods: {
     toggleClassInBody(className) {
@@ -46,7 +52,13 @@ export default {
     handleWindowResize(event) {
       this.$store.dispatch('updateWindowWidth', event.currentTarget.innerWidth);
     },
-  },
+    // logout: function () {
+    //     this.$store.dispatch('logout')
+    //     .then(() => {
+    //       this.$router.push('/login')
+    //     })
+    //   }
+    },
   mounted() {
     this.toggleClassInBody(themeConfig.theme)
     this.$nextTick(() => {
